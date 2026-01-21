@@ -1,0 +1,20 @@
+# Maven
+target/
+*.log
+
+# IDEA
+.idea/
+*.iml
+
+# OS
+.DS_Store
+
+# Flutter (Standard)
+client/.dart_tool/
+client/.packages
+client/.pub/
+client/build/
+client/ios/.generated/
+client/linux/flutter/ephemeral/
+client/macos/flutter/ephemeral/
+client/windows/flutter/ephemeral/
