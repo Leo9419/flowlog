@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
-import '../../main.dart';
+import '../../state/app_settings.dart';
+import '../settings/notifications_page.dart';
+import '../settings/settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -22,13 +24,33 @@ class ProfilePage extends StatelessWidget {
           ),
           title: Text(l.profileUserName),
           subtitle: Text(l.profileTapToLogin),
-          onTap: () {},
+          onTap: () {
+            showDialog<void>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(l.profileUserName),
+                  content: Text(l.profileTapToLogin),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(MaterialLocalizations.of(context).okButtonLabel),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
         const Divider(),
         ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: Text(l.settings),
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            );
+          },
         ),
         SwitchListTile(
           secondary: const Icon(Icons.palette_outlined),
@@ -51,10 +73,13 @@ class ProfilePage extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.notifications_outlined),
           title: Text(l.notifications),
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NotificationsPage()),
+            );
+          },
         ),
       ],
     );
   }
 }
-

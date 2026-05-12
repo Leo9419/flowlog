@@ -5,9 +5,16 @@ import 'package:uuid/uuid.dart';
 import '../../database/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/task_row.dart';
+import '../widgets/task_list_container.dart';
+import '../task_sort.dart';
 
 class InboxPage extends StatefulWidget {
-  const InboxPage({super.key});
+  const InboxPage({
+    super.key,
+    this.sortMode = TaskSortMode.createdDesc,
+  });
+
+  final TaskSortMode sortMode;
 
   @override
   State<InboxPage> createState() => _InboxPageState();
@@ -48,6 +55,17 @@ class _InboxPageState extends State<InboxPage> {
   Widget build(BuildContext context) {
     final db = Provider.of<AppDatabase>(context);
     final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final quickAddShadow = isDark
+        ? const <BoxShadow>[]
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ];
 
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 800;
@@ -56,25 +74,27 @@ class _InboxPageState extends State<InboxPage> {
         children: [
           // Quick Add Bar (TickTick Style)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              border: const Border(bottom: BorderSide(color: Colors.black12)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
-                )
-              ],
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.dividerColor),
+              boxShadow: quickAddShadow,
             ),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.blue),
-                  onPressed: () => _addTask(db),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                Material(
+                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    onTap: () => _addTask(db),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(Icons.add, size: 18, color: theme.colorScheme.primary),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -85,6 +105,9 @@ class _InboxPageState extends State<InboxPage> {
                       hintText: l.inboxTaskTitle,
                       border: InputBorder.none,
                       isDense: true,
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.45),
+                      ),
                     ),
                     onSubmitted: (_) => _addTask(db),
                   ),
@@ -105,7 +128,7 @@ class _InboxPageState extends State<InboxPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final tasks = snapshot.data!;
+                final tasks = sortTasks(snapshot.data!, widget.sortMode);
                 
                 if (tasks.isEmpty) {
                   return Center(
@@ -120,14 +143,16 @@ class _InboxPageState extends State<InboxPage> {
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    return TaskRow(task: task, db: db, isWide: isWide);
-                  },
-                  separatorBuilder: (context, index) => const Divider(height: 1, indent: 50),
-                  itemCount: tasks.length,
+                return TaskListContainer(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 80),
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return TaskRow(task: task, db: db, isWide: isWide);
+                    },
+                    separatorBuilder: (context, index) => const Divider(height: 1, indent: 50),
+                    itemCount: tasks.length,
+                  ),
                 );
               },
             ),
